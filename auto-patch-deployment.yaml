@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-patch-deployment
+  namespace: auto-patch-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auto-patcher
+  template:
+    metadata:
+      labels:
+        app: auto-patcher
+    spec:
+      containers:
+      - name: auto-patcher
+        image: andrejp02/auto-patch-image
+        imagePullPolicy: Always
+        ports: 
+          - containerPort: 8000
+        env:
+
+          - name: DEPLOYMENT_NAME
+            value: node-server-app-vuln
+            
+          - name: NAMESPACE
+            value: node-server-app
+
+          - name: DOCKER_USERNAME
+            value: andrejp02
+
+          - name: DOCKER_REPO
+            value: test_app
+
+          - name: POSTGRES_PORT
+            value: "5432"
+
+          - name: POSTGRES_DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_DB_NAME
+
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_USER
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_PASSWORD
+
+          - name: POSTGRES_HOST
+            value: postgres-service
+          

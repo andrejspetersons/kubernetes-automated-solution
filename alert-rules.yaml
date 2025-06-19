@@ -1,0 +1,39 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: trivy-critical-alert
+  namespace: prometheus-bundle
+  labels:
+    role: alert-rule
+spec:
+  groups:
+    - name: trivy-alert-group
+      rules:
+        - alert: TrivyCriticalVulnerabilityDetected
+          expr: trivy_image_vulnerabilities{severity="Critical",container_name="node-server-app-container"}>=0
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Critical vulnerability"
+            description: "Trivy detect critical vulnerability in you resources"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-alert-rules
+  namespace: prometheus-bundle
+  labels:
+    role: alert-rule
+spec:
+  groups:
+    - name: node-alert-group
+      rules:
+        - alert: ServiceNotAvailable
+          expr: count(up{namespace="node-server-app"})>2
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Service is down"
+            description: "The '{{ $labels.job }}' service is not responding."

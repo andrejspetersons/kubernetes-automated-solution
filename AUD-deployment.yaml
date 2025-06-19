@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-update-deployment
+  namespace: auto-update-deployment-namespace
+  labels:
+    app: auto-update-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auto-update-deployment
+  template:
+    metadata:
+      labels:
+        app:  auto-update-deployment
+    spec:
+      terminationGracePeriodSeconds: 31
+      containers:
+      - name: auto-update-deployment-container
+        image: andrejp02/auto-update-deployment
+        env:
+          - name: DEPLOYMENT
+            value: node-server-app-vuln
+          - name: NAMESPACE
+            value: node-server-app
+        imagePullPolicy: Always

@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: trivy-service-monitor
+  namespace: container-scanner
+  labels:
+    name: trivy-monitor
+    role: service-monitor
+spec:
+  selector:
+    matchLabels:
+      name: trivy-operator
+  namespaceSelector:
+    matchNames:
+      - container-scanner
+  endpoints:
+    - port: metrics
+      path: /metrics
