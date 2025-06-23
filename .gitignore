@@ -12,7 +12,6 @@
 #Custom ignores
 **/env*
 zabbix_values.yaml
-values.yaml
 
 # Ignore logs
 **/*.log

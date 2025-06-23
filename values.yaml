@@ -1,0 +1,52 @@
+prometheus:
+  prometheusSpec:
+  
+    ruleSelector:
+      matchExpressions:
+        - key: role
+          operator: In
+          values:
+            - alert-rule
+    additionalAlertRelabelConfigs:
+      - regex: "image_digest|resource_kind|image_registry|resource_name|pod|name|prometheus|service|job|instance|exported_namespace"
+        action: labeldrop
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector:
+      matchExpressions:
+        - key: role
+          operator: In
+          values:
+            - service-monitor
+
+alertmanager:
+  enabled: true
+
+  serviceMonitor:
+    enabled: true
+
+  alertmanagerSpec:
+    replicas: 2
+
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: 'email-receiver'
+      routes:
+      - match:
+          alertname: WatchDog
+          receiver: 'null'
+      - match:
+          alertname: 'CriticalVulnerabilityDetected'
+          receiver: 'email-receiver'
+
+    receivers:
+      - name: 'email-receiver'
+        email_configs:
+        - to: 'familyand22@gmail.com'
+          from: 'familyand22@gmail.com'
+          smarthost: smtp.gmail.com:587
+          auth_username: 'familyand22@gmail.com'
+          auth_password: 'ymtuosqvollzjvjb'
+          send_resolved: true
+          require_tls: true

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-server-app-vuln
+  namespace: node-server-app
+  labels:
+    app: node-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-server
+  template:
+    metadata:
+      labels:
+        app: node-server
+    spec:
+      containers:
+      - name: node-server-app-container
+        image: andrejp02/node-test-container
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-server-service
+  namespace: node-server-app
+  labels:
+    app: node-server
+spec:
+  selector:
+    app: node-server
+  ports:
+    - name: web
+      port: 4000
+      targetPort: 4000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-server-monitor
+  namespace: node-server-app
+  labels:
+    app: node-server-monitor
+    role: service-monitor
+spec:
+  selector:
+    matchLabels:
+      app: node-server
+  endpoints:
+    - port: web
+      interval: 15s
+      path: /metrics

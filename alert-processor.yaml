@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-processor-deployment
+  namespace: alert-processor-namespace
+  labels:
+    app: alert-processor-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alert-processor
+  template:
+    metadata:
+      labels:
+        app: alert-processor
+    spec:
+      containers:
+        - name: alert-processor
+          image: andrejp02/alert-processor
+          ports:
+            - containerPort: 3000
+          imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-processor-service
+  namespace: alert-processor-namespace
+spec:
+  selector:
+    app: alert-processor
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000

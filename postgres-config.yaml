@@ -50,3 +50,30 @@ spec:
         requests:
           storage: 5Gi
       storageClassName: hostpath
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: auto-patch-namespace
+  labels:
+    app: postgres-service
+spec:
+  clusterIP: None
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres-deployment
+    
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+data:
+  POSTGRES_DB: cG9zdGdyZXM= 
+  POSTGRES_USER: YWRtaW4=
+  POSTGRES_PASSWORD: cGFzc3dvcmQ=
