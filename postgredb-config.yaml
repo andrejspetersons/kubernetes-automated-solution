@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres-deployment
-  namespace: auto-patch-namespace
+  namespace: postgres-sql-namespace
 spec:
-  serviceName: "postgres-service"
-  replicas: 2
+  serviceName: postgres-service
+  replicas: 1
   selector:
     matchLabels:
       app: postgres-deployment
@@ -26,17 +26,17 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
+              name: postgres-secret-init
               key: POSTGRES_DB_NAME
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
+              name: postgres-secret-init
               key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
+              name: postgres-secret-init
               key: POSTGRES_PASSWORD
         volumeMounts:
           - name: postgres-storage
@@ -49,14 +49,14 @@ spec:
       resources:
         requests:
           storage: 5Gi
-      storageClassName: hostpath
+      storageClassName: standard
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres-service
-  namespace: auto-patch-namespace
+  namespace: postgres-sql-namespace
   labels:
     app: postgres-service
 spec:
@@ -66,14 +66,14 @@ spec:
       targetPort: 5432
   selector:
     app: postgres-deployment
-    
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgres-secret
+  name: postgres-secret-init
+  namespace: postgres-sql-namespace
 type: Opaque
 data:
-  POSTGRES_DB: cG9zdGdyZXM= 
+  POSTGRES_DB_NAME: cG9zdGdyZXM=
   POSTGRES_USER: YWRtaW4=
   POSTGRES_PASSWORD: cGFzc3dvcmQ=

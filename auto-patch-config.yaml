@@ -7,80 +7,26 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auto-patcher
+      app: auto-patch
   template:
     metadata:
       labels:
-        app: auto-patcher
+        app: auto-patch
     spec:
       containers:
-      - name: auto-patcher
-        image: andrejp02/auto-patch-image
-        imagePullPolicy: Always
-        ports: 
-          - containerPort: 8000
-        env:
-
-          - name: DEPLOYMENT_NAME
-            value: node-server-app-vuln
-            
-          - name: NAMESPACE
-            value: node-server-app
-
-          - name: DOCKER_USERNAME
-            value: andrejp02
-
-          - name: DOCKER_REPO
-            value: test_app
-
-          - name: POSTGRES_PORT
-            value: "5432"
-
-          - name: POSTGRES_DB_NAME
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secret
-                key: POSTGRES_DB_NAME
-
-          - name: POSTGRES_USER
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secret
-                key: POSTGRES_USER
-
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secret
-                key: POSTGRES_PASSWORD
-
-          - name: POSTGRES_HOST
-            value: postgres-service
+        - name: auto-patch-container
+          image: andrejp02/auto-patch-image
+          ports:
+          - containerPort: 13000
 ---
-
-apiVersion: batch/v1
-kind: CronJob
+apiVersion: v1
+kind: Service
 metadata:
-  name: auto-patcher
+  name: auto-patch-service
+  namespace: auto-patch-namespace
 spec:
-  schedule: "0 2 * * *"  # runs once daily at 2 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: image-updater
-            image: your-custom-image:latest
-            env:
-            - name: DEPLOYMENT_NAME
-              value: "node-server-app-vuln"
-            - name: NAMESPACE
-              value: "node-server-app"
-            - name: CONTAINER_NAME
-              value: "node-server-app-container"
-            - name: DOCKER_USERNAME
-              value: "andrejp02"
-            - name: DOCKER_REPO
-              value: "prometheus_server"
-          restartPolicy: OnFailure
-          
+  selector:
+    app: auto-patch
+  ports:
+    - port: 13000
+      targetPort: 13000

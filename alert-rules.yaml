@@ -10,10 +10,31 @@ spec:
     - name: trivy-alert-group
       rules:
         - alert: CriticalVulnerabilityDetected
-          expr: trivy_vulnerability_id{container_name="node-server-app-container",severity="Critical"}>0
+          expr: trivy_vulnerability_id{fixed_version!="",container_name="node-server-app-container",severity!="Unknown"} > 0
           for: 3m
           labels:
             severity: warning
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: update-request-alert
+  namespace: prometheus-bundle
+  labels:
+    role: alert-rule
+spec:
+  groups:
+    - name: update-group
+      rules:
+        - alert: ContainerImageIsOutOfDate
+          expr: vector(1)
+          labels:
+            schedule: "daily"
+            container_name: "node-server-app-container"
+            image_repository: "andrejp02/node-test-container"
+            exported_namespace: "node-server-app"
+            severity: warning
           annotations:
-            summary: "Critical vulnerability"
-            description: "Trivy detect critical vulnerability in you resources"
+            summary: "Image auto-patch check"
+            description: "Container image {{$labels.image_repository}} requires an update"
+          

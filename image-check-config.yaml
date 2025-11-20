@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-check-deployment
+  namespace: image-check-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-check-app
+  template:
+    metadata:
+      labels:
+        app: image-check-app
+    spec:
+      containers:
+      - name: image-check-container
+        imagePullPolicy: Always
+        image: andrejp02/image-check
+        ports:
+          - containerPort: 12000
+        envFrom:
+          - configMapRef:
+              name: image-check-configmap
+        env:
+          - name: POSTGRES_DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret-image-check
+                key: POSTGRES_DB_NAME
+
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret-image-check
+                key: POSTGRES_USER
+
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret-image-check
+                key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-check-service
+  namespace:  image-check-namespace
+  labels:
+    app: image-check
+spec:
+  selector:
+    app: image-check-app
+  ports:
+    - protocol: TCP
+      port: 12000
+      targetPort: 12000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-check-configmap
+  namespace: image-check-namespace
+data: 
+  DEPLOYMENT_NAME: node-server-app-vuln
+  POSTGRES_PORT: "5432"
+  POSTGRES_HOST: postgres-service.postgres-sql-namespace
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret-image-check
+  namespace: image-check-namespace
+type: Opaque
+data:
+  POSTGRES_DB_NAME: cG9zdGdyZXM=
+  POSTGRES_USER: YWRtaW4=
+  POSTGRES_PASSWORD: cGFzc3dvcmQ=

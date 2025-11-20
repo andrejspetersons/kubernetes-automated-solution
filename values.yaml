@@ -1,15 +1,18 @@
 prometheus:
   prometheusSpec:
-  
     ruleSelector:
       matchExpressions:
         - key: role
           operator: In
           values:
             - alert-rule
+    metricRelabelings:
+      - action: drop
+        regex: "metrics"
+        sourceLabels: [endpoint]
     additionalAlertRelabelConfigs:
-      - regex: "image_digest|resource_kind|image_registry|resource_name|pod|name|prometheus|service|job|instance|exported_namespace"
-        action: labeldrop
+      - action: labeldrop
+        regex: resource_kind|image_registry|resource_name|pod|name|prometheus|service|job|instance|endpoint|container|fixed_version|published_date|namespace
     serviceMonitorSelectorNilUsesHelmValues: false
     serviceMonitorSelector:
       matchExpressions:
@@ -17,7 +20,6 @@ prometheus:
           operator: In
           values:
             - service-monitor
-
 alertmanager:
   enabled: true
 
@@ -26,22 +28,54 @@ alertmanager:
 
   alertmanagerSpec:
     replicas: 2
+    
 
   config:
     global:
       resolve_timeout: 5m
     route:
-      receiver: 'email-receiver'
+      repeat_interval: 2h
+      receiver: 'null'
+      group_wait: 30s
+      group_by: ['alertname']
+      group_interval: 5m
       routes:
+
       - match:
           alertname: WatchDog
-          receiver: 'null'
+        receiver: 'null'
+
       - match:
           alertname: 'CriticalVulnerabilityDetected'
-          receiver: 'email-receiver'
+        receiver: 'email-receiver'
+
+      - match:
+          alertname: ContainerImageIsOutOfDate
+        receiver: 'image-receiver'
+        repeat_interval: 5m
 
     receivers:
+
+      - name: 'null'
+
       - name: 'email-receiver'
+
+        email_configs:
+        - to: 'familyand22@gmail.com'
+          from: 'familyand22@gmail.com'
+          headers:
+            subject: '{{template "subject_custom_template" .}}'
+          html: '{{template "text_custom_template" .}}'
+          smarthost: smtp.gmail.com:587
+          auth_username: 'familyand22@gmail.com'
+          auth_password: 'ymtuosqvollzjvjb'
+          send_resolved: true
+          require_tls: true
+        webhook_configs:
+          - url: 'http://alert-processor-service.alert-processor-namespace.svc.cluster.local:3000/alerts'
+
+      - name: 'image-receiver'
+
         email_configs:
         - to: 'familyand22@gmail.com'
           from: 'familyand22@gmail.com'
@@ -50,3 +84,63 @@ alertmanager:
           auth_password: 'ymtuosqvollzjvjb'
           send_resolved: true
           require_tls: true
+        webhook_configs:
+          - url: 'http://image-check-service.image-check-namespace.svc.cluster.local:12000/alerts'
+        
+    templates:
+    - /etc/alertmanager/config/*.tmpl
+
+  templateFiles:
+    subject_template.tmpl: |-
+      {{define "subject_custom_template"}}
+        [{{ if .Status }}{{ .Status | toUpper }}{{ else }}UNKNOWN{{ end }}]
+        Error occurred in {{ if index .CommonLabels "container_name" }}{{ index .CommonLabels "container_name" }}{{ else }}UNKNOWN_CONTAINER{{ end }}
+      {{end}}
+    text_template.tmpl: |-
+      {{define "text_custom_template"}}
+        <html>
+              <body>
+                🚨<p>Critical Vulnerability Detected</p><br/>
+                {{- range .Alerts }}
+                  <p>
+                  Vulnerability ID:
+                    {{- if index .Labels "vuln_id" }}
+                      {{ index .Labels "vuln_id" }}
+                    {{ else }}UNKNOWN_CVE
+                      {{ end }}
+                  </p>
+                  <p>
+                  Vulnerability Score:
+                    {{- if index .Labels "vuln_score" }}
+                      {{ index .Labels "vuln_score" }}/10
+                    {{ else }}UNKNOWN_SCORE
+                      {{ end }}
+                  </p>
+                  <p>Vulnerability Description:
+                    Vulnerability occurs in {{- if index .Labels "vuln_title" }}{{ index .Labels "vuln_title" }}
+                      {{ else }} - 
+                    {{ end }}
+                  </p>
+                  <br></br>
+                  <p>Vulnerable image:
+                    {{- if index .Labels "image_repository" }}
+                      {{reReplaceAll "^.*/" "" (index .Labels "image_repository") }}:{{.Labels.image_tag}}
+                    {{ else }}UNKNOWN_IMAGE
+                      {{ end }}
+                  </p>
+                  <hr>
+                {{ end }}
+              </body>
+        </html>
+      {{end}}
+
+# - name: 'image-receiver'
+
+# email_configs:
+# - to: 'familyand22@gmail.com'
+#   from: 'familyand22@gmail.com'
+#   smarthost: smtp.gmail.com:587
+#   auth_username: 'familyand22@gmail.com'
+#   auth_password: 'ymtuosqvollzjvjb'
+#   send_resolved: true
+#   require_tls: true

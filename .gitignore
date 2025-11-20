@@ -12,6 +12,8 @@
 #Custom ignores
 **/env*
 zabbix_values.yaml
+alert_catcher/
+node-test-app/
 
 # Ignore logs
 **/*.log

@@ -1,0 +1,19 @@
+{
+  "name": "webook-update",
+  "version": "1.0.0",
+  "description": "Check images security level and store safe image tags",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "docker login && docker build -t image-check . && docker tag image-check andrejp02/image-check",
+    "start": "node main.js"
+  },
+  "author": "Andrey Peterson",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "express": "^5.1.0",
+    "pg": "^8.15.6"
+  }
+}
