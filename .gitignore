@@ -9,6 +9,7 @@
 **/.env
 **/.env.*
 
+
 #Custom ignores
 **/env*
 zabbix_values.yaml

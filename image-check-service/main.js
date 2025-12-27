@@ -1,10 +1,10 @@
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import express from 'express';
-import {handleAxiosErrors} from './errors/custom-errors.js';
 import * as dbService from './database-commands-images.js';
 import * as dockerApiService from './docker-api-service.js';
 import { DEPLOYMENT_NAME } from './env-variables.js';
+import { handleAxiosErrors } from './errors/custom-errors.js';
 
 const app=express()
 const PORT=12000
@@ -48,7 +48,6 @@ app.post('/alerts',async(req,res)=>{
   }
 
 })
-
 dbService.initDatabase()
 .then(()=>{app.listen(PORT,()=>{console.log(`Image check app is listening on port ${PORT}`)})})
 .catch((err)=>{console.log(`Failed to connect to DB:`,err);process.exit(1)})

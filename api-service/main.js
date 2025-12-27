@@ -48,7 +48,6 @@ app.get("/isImageVulnerable",async(req,res)=>{
 /*app.put("/updateState",async(req,res)=>{
   const result=await(req.body.containername)
 })*/
-
 initDatabase()
 .then(()=>{
     app.listen(PORT,()=>{

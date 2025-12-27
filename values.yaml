@@ -30,6 +30,7 @@ alertmanager:
     replicas: 2
     
 
+
   config:
     global:
       resolve_timeout: 5m

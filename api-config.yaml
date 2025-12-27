@@ -41,7 +41,6 @@ spec:
               secretKeyRef:
                 name: mongo-secret-api
                 key: MONGO_PASSWORD
-
 ---
 apiVersion: v1
 kind: Service

@@ -22,7 +22,6 @@ app.post("/patch",async(req,res)=>{
         reason: "Image tag not found or not deployable"
     })
 })
-
 app.listen(PORT,()=>{
     console.log(`Kubernetes auto-patch listen port ${PORT}`)
 })

@@ -40,6 +40,7 @@ spec:
               secretKeyRef:
                 name: mongo-image-check
                 key: MONGO_PASSWORD
+                
 ---
 apiVersion: v1
 kind: Service

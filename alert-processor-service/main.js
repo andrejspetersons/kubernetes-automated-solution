@@ -1,7 +1,7 @@
 import axios from 'axios'
-import express from 'express'
 import bodyParser from 'body-parser'
-import {mapToAlert} from './alertsMapper.js'
+import express from 'express'
+import { mapToAlert } from './alertsMapper.js'
 
 const app = express()
 const PORT = 3000
@@ -37,7 +37,6 @@ app.post('/alerts',async (req,res)=>{
     }
 
 });
-
 app.listen(PORT,()=>{
     console.log("Hello World!")
 })
