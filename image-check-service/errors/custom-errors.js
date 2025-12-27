@@ -31,6 +31,5 @@ export function handleAxiosErrors(name){
       console.error(err.stack);
     }
 
-    console.error("======================================\n");
   };
 }
