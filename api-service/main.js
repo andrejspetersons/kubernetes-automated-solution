@@ -1,5 +1,5 @@
 import express from 'express';
-import { addNewAlert, ensureDbConnected, getImageDigestValue, isImageVulnerable } from './database-commands-alerts.js';
+import { addNewAlert, initDatabase, getImageDigestValue, isImageVulnerable } from './database-commands-alerts.js';
 
 const app=express()
 const PORT=11000
@@ -10,8 +10,7 @@ app.post("/saveAlert",async(req,res)=>{
     try {
       const alerts=req.body
       console.log(alerts)
-
-      await Promise.all(alerts.map(addNewAlert))
+      await addNewAlert(alerts)
       res.status(201).json({ message: "Alerts saved successfully." });
       
   } catch (err) {
@@ -19,6 +18,20 @@ app.post("/saveAlert",async(req,res)=>{
     res.status(500).json({ error: 'Internal Server Error'});
   }
  
+})
+
+app.get("/imageDigest",async(req,res)=>{
+  const digest=await getImageDigestValue(req.query.fullImage) //full image->repository_name in alerts login+image_name
+  console.log("Image digest endpoint",digest)
+  if(digest){
+    console.log("Image digest is found in alerts table")
+    res.json({exist:true})
+  }
+  else{
+    console.log("Image digest not found in alrts table")
+    res.json({exists:false}) //kinda 404 ,but not really
+  }
+  
 })
 
 //app check for vulnerability status
@@ -29,24 +42,14 @@ app.get("/isImageVulnerable",async(req,res)=>{
 })
 
 //request check if image content doesnt change
-app.get("/imageDigest",async(req,res)=>{
-  const digest=await getImageDigestValue(req.query.fullImage) //full image->repository_name in alerts login+image_name
-  console.log(digest)
-  if(digest){
-    res.json({exist:true,digest})
-  }
-  else{
-    res.json({exists:false,message: "Image digest not found in alerts table!!"}) //kinda 404 ,but not really
-  }
-  
-})
+
 
 //request SET isVulnerable to false
-app.put("/updateState",async(req,res)=>{
+/*app.put("/updateState",async(req,res)=>{
   const result=await(req.body.containername)
-})
+})*/
 
-ensureDbConnected()
+initDatabase()
 .then(()=>{
     app.listen(PORT,()=>{
     console.log(`Alert api is listening PORT ${PORT}`)

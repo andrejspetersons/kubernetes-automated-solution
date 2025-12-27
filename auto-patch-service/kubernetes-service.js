@@ -4,7 +4,7 @@ export async function updateDeploymentImage(namespaceName,deploymentName,patched
   const res =await getDeployment(deploymentName,namespaceName)
   const deploymentStatus = await getDeploymentStatus(deploymentName,namespaceName)
   const deploymentObject=res
-  console.log(deploymentStatus)
+  console.log("Deployment status\n",deploymentStatus)
 
   const oldImage=deploymentObject.spec.template.spec.containers[0].image
   patchImage(deploymentObject,patchedImage)

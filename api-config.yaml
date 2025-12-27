@@ -24,23 +24,23 @@ spec:
         - configMapRef:
             name: api-configmap
         env:
-          - name: POSTGRES_DB_NAME
+          - name: MONGO_DB
             valueFrom:
               secretKeyRef:
-                name: postgres-secret-api
-                key: POSTGRES_DB_NAME
+                name: mongo-secret-api
+                key: MONGO_DB
 
-          - name: POSTGRES_USER
+          - name: MONGO_USERNAME
             valueFrom:
               secretKeyRef:
-                name: postgres-secret-api
-                key: POSTGRES_USER
+                name: mongo-secret-api
+                key: MONGO_USERNAME
 
-          - name: POSTGRES_PASSWORD
+          - name: MONGO_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: postgres-secret-api
-                key: POSTGRES_PASSWORD
+                name: mongo-secret-api
+                key: MONGO_PASSWORD
 
 ---
 apiVersion: v1
@@ -64,16 +64,15 @@ metadata:
   name: api-configmap
   namespace: api-namespace
 data:
-  POSTGRES_PORT: "5432"
-  POSTGRES_HOST: postgres-service.postgres-sql-namespace
+  MONGO_HOST: mongo-service.mongo-namespace
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgres-secret-api
+  name: mongo-secret-api
   namespace: api-namespace
 type: Opaque
 data:
-  POSTGRES_DB_NAME: cG9zdGdyZXM=
-  POSTGRES_USER: YWRtaW4=
-  POSTGRES_PASSWORD: cGFzc3dvcmQ=
+  MONGO_DB: bW9uZ29kYg==
+  MONGO_USERNAME: YWRtaW4=
+  MONGO_PASSWORD: cGFzc3dvcmQ=

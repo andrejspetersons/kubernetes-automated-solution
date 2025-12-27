@@ -12,6 +12,7 @@ app.post("/patch",async(req,res)=>{
     const isPatchSucessfull=await k8sService.updateDeploymentImage(namespace,deployment,patchImage) //patchedimage name+tag which is safe
     
     if(isPatchSucessfull){
+        console.log("Image patched successfully!!")
         return res.status(200).send("Image is patched successfully!!")
     }
     

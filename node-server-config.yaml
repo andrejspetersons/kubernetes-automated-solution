@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: node-server-app-container
-        image: andrejp02/node-test-container:v1
+        image: andrejp02/node-test-container
 ---
 apiVersion: v1
 kind: Service

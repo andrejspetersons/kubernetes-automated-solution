@@ -34,7 +34,7 @@ alertmanager:
     global:
       resolve_timeout: 5m
     route:
-      repeat_interval: 2h
+      repeat_interval: 15m
       receiver: 'null'
       group_wait: 30s
       group_by: ['alertname']
@@ -50,7 +50,7 @@ alertmanager:
         receiver: 'email-receiver'
 
       - match:
-          alertname: ContainerImageIsOutOfDate
+          alertname: 'ContainerImageIsOutOfDate'
         receiver: 'image-receiver'
         repeat_interval: 5m
 

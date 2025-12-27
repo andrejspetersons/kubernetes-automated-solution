@@ -21,6 +21,7 @@ app.post('/alerts',async (req,res)=>{
         
         const response=await axios.post("http://api-pod-service.api-namespace:11000/saveAlert",alertsData)
         if(response.status==201){
+            console.log("✅ Alert successfully saved via API service");
             res.status(201).send("Created");
         }
         

@@ -23,23 +23,23 @@ spec:
           - configMapRef:
               name: image-check-configmap
         env:
-          - name: POSTGRES_DB_NAME
+          - name: MONGO_DB
             valueFrom:
               secretKeyRef:
-                name: postgres-secret-image-check
-                key: POSTGRES_DB_NAME
+                name: mongo-image-check
+                key: MONGO_DB
 
-          - name: POSTGRES_USER
+          - name: MONGO_USERNAME
             valueFrom:
               secretKeyRef:
-                name: postgres-secret-image-check
-                key: POSTGRES_USER
+                name: mongo-image-check
+                key: MONGO_USERNAME
 
-          - name: POSTGRES_PASSWORD
+          - name: MONGO_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: postgres-secret-image-check
-                key: POSTGRES_PASSWORD
+                name: mongo-image-check
+                key: MONGO_PASSWORD
 ---
 apiVersion: v1
 kind: Service
@@ -63,16 +63,15 @@ metadata:
   namespace: image-check-namespace
 data: 
   DEPLOYMENT_NAME: node-server-app-vuln
-  POSTGRES_PORT: "5432"
-  POSTGRES_HOST: postgres-service.postgres-sql-namespace
+  MONGO_HOST: mongo-service.mongo-namespace
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgres-secret-image-check
+  name: mongo-image-check
   namespace: image-check-namespace
 type: Opaque
 data:
-  POSTGRES_DB_NAME: cG9zdGdyZXM=
-  POSTGRES_USER: YWRtaW4=
-  POSTGRES_PASSWORD: cGFzc3dvcmQ=
+  MONGO_DB: bW9uZ29kYg==
+  MONGO_USERNAME: YWRtaW4=
+  MONGO_PASSWORD: cGFzc3dvcmQ=

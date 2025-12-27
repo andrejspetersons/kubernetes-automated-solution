@@ -14,35 +14,20 @@ app.use(bodyParser.json())
 app.post('/alerts',async(req,res)=>{
   try{
     const [alert] =req.body.alerts
-    //extract repository name
-    const repo=alert.labels.image_repository
-    //extract target namespace where upgrade
-    const containerNamespace=alert.labels.exported_namespace
+    const repo=alert.labels.image_repository  //extract repository name
+    const containerNamespace=alert.labels.exported_namespace    //extract target namespace where upgrade
+    const imageData=await dockerApiService.getLatestImageData(repo) //get the latest info about this image
     
-    //get the latest info about this image
-    const imageData=await dockerApiService.getLatestImageData(repo)
-    console.log(imageData)
-
+    //console.log(imageData)
+    //Data to find element that is neccessary to update
     const data={imageData:imageData,
             namespace:containerNamespace,
             deployment:DEPLOYMENT_NAME}
-
-    //check if there isSafe version of image in table
-    const safeTag=await dbService.safeImageExist(imageData)
     
-    if(safeTag){
-      console.log("Safe tag exist!!!")
-      await axios.post("http://auto-pacth-service.auto-pacth-namespace:13000/patch",
-        {imageData:imageData,
-          namespace:alerts.exported_namespace,
-          deployment:DEPLOYMENT_NAME},
-          {timeout:5000}).catch(handleAxiosErrors("Auto-Patch Service"))
-    }
-
-    //check if digest of container exist
-    const digestExist=await axios.get("http://api-pod-service.api-namespace:11000/imageDigest",
+    //add const safeTag later
+    const digestExist=await axios.get("http://api-pod-service.api-namespace:11000/imageDigest",  //check if digest of container exist in alerts
       {params:imageData},
-      {timeout:5000})                //.catch(handleAxiosErrors("API service"))
+      {timeout:5000})   
 
       if(!digestExist.data.exist){
         console.log("Safe digest detected!!")
@@ -54,12 +39,16 @@ app.post('/alerts',async(req,res)=>{
         console.log("There are no safe image published yet")
       }
       
+      res.status(200).send("Image check is called")
+      
   }catch(error){
     console.error("Error while processing alerts:", error.message || error);
+    console.error("Error code",error.code)
+    console.error((JSON.stringify(error, Object.getOwnPropertyNames(error))))
   }
 
 })
 
-dbService.ensureDbConnected()
+dbService.initDatabase()
 .then(()=>{app.listen(PORT,()=>{console.log(`Image check app is listening on port ${PORT}`)})})
 .catch((err)=>{console.log(`Failed to connect to DB:`,err);process.exit(1)})
