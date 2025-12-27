@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-ui
+  namespace: grafana-test-namespace
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana-ui
+  template:
+    metadata:
+      labels:
+        app: grafana-ui
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          env:
+          - name: GF_SECURITY_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                name: grafana-secret
+                key: GRAFANA_USERNAME
+
+          - name: GF_SECURITY_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: grafana-secret
+                key: GRAFANA_PASSWORD
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: grafana-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: grafana-test-namespace
+spec:
+  selector:
+    app: grafana-ui
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secret
+  namespace: grafana-test-namespace
+type: Opaque
+data:
+  GRAFANA_USERNAME: YWRtaW4=
+  GRAFANA_PASSWORD: YWRtaW4xMjM=
+
+

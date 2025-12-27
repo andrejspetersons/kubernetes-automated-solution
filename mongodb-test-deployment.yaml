@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-deployment
+  namespace: mongo-test-namespace
+spec:
+  serviceName: mongo-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-deployment
+  template:
+    metadata:
+      labels:
+        app: mongodb-deployment
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:8
+          ports:
+            - containerPort: 27017
+              name: mongo
+          env:
+            - name: MONGO_HOST
+              value: mongo-service
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret-init
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret-init
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: MONGO_INITDB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret-init
+                  key: MONGO_INITDB_DATABASE
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: standard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+  namespace: mongo-test-namespace
+  labels:
+    app: mongo-service
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    app: mongodb-deployment
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secret-init
+  namespace: mongo-test-namespace
+type: Opaque
+data:
+  # mongo
+  MONGO_INITDB_DATABASE: bW9uZ29kYg==
+  # admin
+  MONGO_INITDB_ROOT_USERNAME: YWRtaW4=
+  # password
+  MONGO_INITDB_ROOT_PASSWORD: cGFzc3dvcmQ=
