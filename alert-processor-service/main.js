@@ -18,10 +18,10 @@ app.post('/alerts',async (req,res)=>{
         //mapped data
         console.log(alertsData)
 
-        
         const response=await axios.post("http://api-pod-service.api-namespace:11000/saveAlert",alertsData)
+        
         if(response.status==201){
-            console.log("✅ Alert successfully saved via API service");
+            console.log(`[${new Date().toTimeString().split(' ')[0]}]`+"✅ Alert successfully saved via API service");
             res.status(201).send("Created");
         }
         

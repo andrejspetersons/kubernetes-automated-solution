@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: trivy-critical-alert
-  namespace: prometheus-bundle
+  namespace: monitoring-stack
   labels:
     role: alert-rule
 spec:
@@ -19,7 +19,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: update-request-alert
-  namespace: prometheus-bundle
+  namespace: monitoring-stack
   labels:
     role: alert-rule
 spec:

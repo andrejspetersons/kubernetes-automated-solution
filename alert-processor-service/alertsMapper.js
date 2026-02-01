@@ -4,7 +4,7 @@ export function mapToAlert(alerts){
         
         alertname:alert.labels.alertname,
         container_name:alert.labels.container_name,
-        namespace_name:alert.labels.exported_namespace,
+        namespace_name:alert.labels.namespace,
         image_digest:alert.labels.image_digest,
         image_repository:alert.labels.image_repository,
         image_tag:alert.labels.image_tag,

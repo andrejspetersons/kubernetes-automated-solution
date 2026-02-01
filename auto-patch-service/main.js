@@ -22,6 +22,25 @@ app.post("/patch",async(req,res)=>{
         reason: "Image tag not found or not deployable"
     })
 })
+
+app.post("/addSecurityContext",async(req,res)=>{
+    try {
+        const [alerts]=req.body.alerts
+        const deploymentName=alerts.labels.deployment
+        const namespaceName=alerts.labels.namespace
+        console.log(`[${new Date().toTimeString().split(' ')[0]}]`+"addSecurityProperties start execution");
+        await k8sService.addSecurityProperties(deploymentName,namespaceName)
+        console.log(`[${new Date().toTimeString().split(' ')[0]}]`+"addSecurityProperties end execution");
+        res.status(200).send("OK")
+    } catch (error) {
+        console.error(err)
+        res.status(500).send("Failed to apply security context")        
+    }
+
+
+})
+
+
 app.listen(PORT,()=>{
     console.log(`Kubernetes auto-patch listen port ${PORT}`)
 })

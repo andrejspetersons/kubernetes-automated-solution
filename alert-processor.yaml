@@ -20,11 +20,6 @@ spec:
           image: andrejp02/alert-processor
           ports:
             - containerPort: 3000
-            - containerPort: 9229
-          env:
-            - name: MODE
-              value: debug
-          imagePullPolicy: Always
 ---
 apiVersion: v1
 kind: Service

@@ -3,12 +3,14 @@ kind: ClusterRole
 metadata:
   name: auto-patch-service-role
 rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get","list","watch","update","patch"]
 
+- apiGroups: ["apps"]
+  resources: ["deployments/status"]
+  verbs: ["get"]
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -21,4 +23,3 @@ roleRef:
   kind: ClusterRole
   name: auto-patch-service-role
   apiGroup: rbac.authorization.k8s.io
-

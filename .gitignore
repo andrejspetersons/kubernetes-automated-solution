@@ -14,8 +14,6 @@
 **/env*
 zabbix_values.yaml
 alert_catcher/
-node-test-app/
-*test*.yaml
 
 # Ignore logs
 **/*.log
