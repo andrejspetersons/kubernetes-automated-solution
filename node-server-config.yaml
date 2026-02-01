@@ -18,6 +18,7 @@ spec:
       containers:
       - name: node-server-app-container
         image: andrejp02/node-test-container
+
         
 ---
 apiVersion: v1
@@ -34,20 +35,3 @@ spec:
     - name: web
       port: 4000
       targetPort: 4000
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: node-server-monitor
-  namespace: node-server-app
-  labels:
-    app: node-server-monitor
-    role: service-monitor
-spec:
-  selector:
-    matchLabels:
-      app: node-server
-  endpoints:
-    - port: web
-      interval: 15s
-      path: /metrics

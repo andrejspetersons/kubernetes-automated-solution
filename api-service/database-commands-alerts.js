@@ -21,10 +21,9 @@ export async function addNewAlert(alerts){
   }
 }
 
-
 export async function getImageDigestValue(repository, tag) {
   const result = await db.collection("alerts").findOne(
-    {image_repository: repository,image_tag: tag},
+    {image_repository: repository,image_tag: tag},//we assume that if digest not found in alerts table it is safe, but what if it is resolved
     {projection: { image_digest: 1 }});
 
   return result?.image_digest || null;
@@ -32,11 +31,15 @@ export async function getImageDigestValue(repository, tag) {
 
 export async function isImageVulnerable(name,tag,digest){
   const flag = await db.collection("alerts").findOne(
-    {image_repository:name,image_tag:tag,image_digest:digest},
+    {image_repository:name,image_tag:tag,image_digest:digest}, 
     {projection:{isVulnerable:1}}
   )
 
   return result?.isVulnerable || null
+}
+
+export async function updateImageStatus(name){
+  // make status update in both tables using name of image or smth similar
 }
 
 

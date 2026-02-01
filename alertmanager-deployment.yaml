@@ -1,0 +1,183 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: prometheus-namespace
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:latest
+        args:
+          - "--config.file=/etc/alertmanager/alertmanager.yml"
+        ports:
+          - containerPort: 9093
+        volumeMounts:
+        - name: alertmanager-config
+          mountPath: /etc/alertmanager
+      volumes:
+      - name: alertmanager-config
+        configMap:
+          name: alertmanager-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-service
+  namespace: prometheus-namespace
+spec:
+  selector:
+    app: alertmanager
+  ports:
+    - port: 9093
+      targetPort: 9093
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: prometheus-namespace
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 1m
+    templates:
+      - /etc/alertmanager/*.tmpl
+    route:
+      receiver: "default"
+      group_by: ['alertname']
+      group_interval: 5m
+      repeat_interval: 15m
+      routes:
+      - match:
+          alertname: CriticalVulnerabilityDetected
+        receiver: "vulnerability-info-email"
+
+      - match:
+          alertname: ContainerImageIsOutOfDate
+        receiver: "image-update-email"
+        repeat_interval: 5m
+
+      - match:
+          alertname: RootPrivellegeDetected
+        receiver: "vulnerability-in-config-mail"
+        repeat_interval: 5m
+
+    receivers:
+    - name: "default"
+  
+    - name: "vulnerability-info-email"
+      email_configs:
+      - to: "familyand22@gmail.com"
+        from: "familyand22@gmail.com"
+        smarthost: "smtp.gmail.com:587"
+        headers:
+          subject: '[VULN] {{ .CommonLabels.alertname }} is {{ .CommonLabels.alertname}} is in status [{{ .Status | toUpper }}]'
+        auth_username: "familyand22@gmail.com"
+        auth_password: "rnmwibuklraspqle"
+        html: '{{ template "alert.base" . }}'
+      webhook_configs:
+        - url: 'http://alert-processor-service.alert-processor-namespace.svc.cluster.local:3000/alerts'
+    
+    - name: "image-update-email"
+      email_configs:
+      - to: "familyand22@gmail.com"
+        from: "familyand22@gmail.com"
+        smarthost: "smtp.gmail.com:587"
+        headers:
+          subject: '[VULN] {{ .CommonLabels.alertname }} is {{ .CommonLabels.alertname}} is in status [{{ .Status | toUpper }}]'
+        auth_username: "familyand22@gmail.com"
+        auth_password: "rnmwibuklraspqle"
+        html: '{{ template "alert.base" . }}'
+      webhook_configs:
+        - url: 'http://image-check-service.image-check-namespace.svc.cluster.local:12000/alerts'
+    
+    - name: "vulnerability-in-config-mail"
+      email_configs:
+      - to: "familyand22@gmail.com"
+        from: "familyand22@gmail.com"
+        smarthost: "smtp.gmail.com:587"
+        headers:
+          subject: '[VULN] {{ .CommonLabels.alertname }} is {{ .CommonLabels.alertname}} is in status [{{ .Status | toUpper }}]'
+        auth_username: "familyand22@gmail.com"
+        auth_password: "rnmwibuklraspqle"
+        html: '{{ template "alert.base" . }}'
+      webhook_configs:
+        - url: 'http://auto-patch-service.auto-patch-namespace.svc.cluster.local:13000/addSecurityContext'
+  
+  custom.tmpl: |-
+    {{ define "alert.base" }}
+      <h2>{{ .CommonLabels.alertname }}</h2>
+
+      {{ if eq .CommonLabels.alertname "CriticalVulnerabilityDetected" }}
+        {{ template "vuln.details" . }}
+      {{else if eq .CommonLabels.alertname "ContainerImageIsOutOfDate" }}
+        {{ template "image.update" . }}
+      {{else if eq .CommonLabels.alertname "RootPrivellegeDetected" }}
+        {{ template "config.vuln" . }}
+      {{ end }}
+
+    {{ end }}
+
+    {{ define "vuln.details" }}
+      <p><b>Namespace:</b> {{ .CommonLabels.namespace }}</p>
+      <p><b>Container:</b> {{ .CommonLabels.container_name }}</p>
+      <p><b>Image:</b>  {{ .CommonLabels.image_repository }}</p>
+
+      <p><b>Detected Vulnerabilities:</b></p>
+      <ul style="list-style-type: none;">
+        {{ range .Alerts }}
+
+          {{ $score := "0" }}
+          {{ with .Labels.vuln_score }}
+            {{ $score = . }}
+          {{ end }}
+
+          <li>
+            <b>CVE:</b> {{ .Labels.vuln_id }}<br/>
+            <b>Severity:</b> {{ .Labels.severity }}<br/>
+            <b>Score:{{ $score }}</b><br/>
+            <b>Vulnerability description:</b> {{ .Labels.vuln_title }}
+          </li>
+        {{ end }}
+      </ul>
+
+    {{ end }}
+
+    {{ define "image.update" }}
+      <p>Container image is <b>outdated</b>.</p>
+
+      <p>
+      <b>Namespace:</b> {{ .CommonLabels.exported_namespace }}<br/>
+      <b>Container:</b> {{ .CommonLabels.container_name }}<br/>
+      <b>Repository:</b> {{ .CommonLabels.image_repository }}
+      </p>
+
+      <p>
+      An additional image-check service will verify whether a newer image is available.
+      </p>
+
+    {{ end }}
+
+    {{ define "config.vuln" }}
+      <p><b>Configuration vulnerability detected in current deployment</b></p>
+
+      <p>
+      <b>Namespace:</b> {{ .CommonLabels.namespace }}<br/>
+      <b>Deployment:</b> {{ .CommonLabels.deployment }}<br/>
+      </p>
+
+      <p>
+      The affected resource will be updated automatically using the
+      <b>auto-patch service</b> to enforce a secure configuration.
+      </p>
+    {{ end }}

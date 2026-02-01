@@ -1,19 +1,21 @@
-import k8sClient from './kubernetes-config.js';
+import * as k8sUtils from './kubernetes-service-utils.js'
 
 export async function updateDeploymentImage(namespaceName,deploymentName,patchedImage){
-  const res =await getDeployment(deploymentName,namespaceName)
-  const deploymentStatus = await getDeploymentStatus(deploymentName,namespaceName)
+  const res =await k8sUtils.getDeployment(deploymentName,namespaceName)
+  const deploymentStatus = await k8sUtils.getDeploymentStatus(deploymentName,namespaceName)
   const deploymentObject=res
+  
+  console.log("DELPLOYMENT\n",res)
   console.log("Deployment status\n",deploymentStatus)
 
   const oldImage=deploymentObject.spec.template.spec.containers[0].image
-  patchImage(deploymentObject,patchedImage)
+  k8sUtils.patchImage(deploymentObject,patchedImage)
 
-  await k8sClient.replaceNamespacedDeployment({name:deploymentName,namespace:namespaceName,body:deploymentObject})
+  await k8sUtils.replaceDeployment(deploymentName,namespaceName,deploymentObject)
   const isHealthy=await isDeploymentHealthy(deploymentObject)
   if(!isHealthy){
-    patchImage(deploymentObject,oldImage)
-    await k8sClient.replaceNamespacedDeployment({name:deploymentName,namespace:namespaceName,body:deploymentObject})
+    k8sUtils.patchImage(deploymentObject,oldImage)
+    await k8sUtils.replaceDeployment(deploymentName,namespaceName,deploymentObject)
     return false
   }
   else{
@@ -29,7 +31,7 @@ async function isDeploymentHealthy(deploymentobject,retries=3,delay=2000){
   const avaiable=deploymentobject.status?.availableReplicas ?? 0
 
   for(let i=0; i<retries;i++){
-    const deploymentStatus=await getDeployment(deploymentObjectName,deploymentObjectNamespace)
+    const deploymentStatus=await k8sUtils.getDeployment(deploymentObjectName,deploymentObjectNamespace)
     const status= deploymentStatus.status
     console.log(`Try ${i + 1}/${retries} - availableReplicas: ${status.availableReplicas} ${status.unavailableReplicas} ${status.replicas}`);
     
@@ -42,17 +44,8 @@ async function isDeploymentHealthy(deploymentobject,retries=3,delay=2000){
   }
     console.log("Pod is unhealthy")
     return false
-
 }
 
-async function getDeployment(deploymentName,namespaceName){
-  return await k8sClient.readNamespacedDeployment({name:deploymentName,namespace:namespaceName})
-}
-
-async function getDeploymentStatus(deploymentName,namespaceName){
-  return await k8sClient.readNamespacedDeploymentStatus({name:deploymentName,namespace:namespaceName})
-}
-
-function patchImage(deployment,image){
-  deployment.spec.template.spec.containers[0].image=image
+export async function addSecurityProperties(deploymentName,namespaceName){
+  await k8sUtils.removeRootPermissions(deploymentName,namespaceName)  
 }

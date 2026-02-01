@@ -214,7 +214,7 @@ image:
 # trivy-operator does not have a user interface.
 service:
   # -- if true, the Service doesn't allocate any IP
-  headless: true
+  headless: false
   # -- port exposed by the Service
   metricsPort: 80
   # -- annotations added to the operator's service

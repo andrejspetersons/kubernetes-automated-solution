@@ -8,9 +8,10 @@ app.use(express.json());
 
 app.post("/saveAlert",async(req,res)=>{
     try {
+      
       const alerts=req.body
-      console.log(alerts)
       await addNewAlert(alerts)
+
       res.status(201).json({ message: "Alerts saved successfully." });
       
   } catch (err) {
@@ -21,14 +22,16 @@ app.post("/saveAlert",async(req,res)=>{
 })
 
 app.get("/imageDigest",async(req,res)=>{
-  const digest=await getImageDigestValue(req.query.fullImage) //full image->repository_name in alerts login+image_name
+  console.log(req.query.fullImage)
+  console.log(req.query.tagName)
+  const digest=await getImageDigestValue(req.query.fullImage,req.query.tagName) //full image->repository_name in alerts login+image_name
   console.log("Image digest endpoint",digest)
   if(digest){
     console.log("Image digest is found in alerts table")
     res.json({exist:true})
   }
   else{
-    console.log("Image digest not found in alrts table")
+    console.log("Image digest not found in alerts table")
     res.json({exists:false}) //kinda 404 ,but not really
   }
   

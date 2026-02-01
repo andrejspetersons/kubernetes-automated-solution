@@ -31,11 +31,12 @@ app.post('/alerts',async(req,res)=>{
 
       if(!digestExist.data.exist){
         console.log("Safe digest detected!!")
-        await dbService.addAsSafe(imageData)
+        await dbService.addAsSafe(imageData) // we suggest image is safe if the digest value not in alerts
         await axios.post("http://auto-patch-service.auto-patch-namespace:13000/patch",data,
             {timeout:5000}).catch(handleAxiosErrors("Auto-Patch Service"))
       }
       else{
+        await dbService.addAsUnsafe(imageData) //if digest exist we add image data as unSafe
         console.log("There are no safe image published yet")
       }
       

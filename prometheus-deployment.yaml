@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-server
+  namespace: prometheus-namespace
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: prometheus-server
+  template:
+    metadata:
+      labels:
+        app: prometheus-server
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        args:
+          - "--config.file=/etc/prometheus/prometheus.yml"
+          - "--storage.tsdb.path=/prometheus"
+        ports:
+          - containerPort: 9090
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: prometheus-namespace
+spec:
+  selector:
+    app: prometheus-server
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: prometheus-namespace
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+    rule_files:
+      - /etc/prometheus/alert-rules.yml
+
+    scrape_configs:
+    - job_name: 'prometheus'
+      static_configs:
+      - targets: ['localhost:9090']
+    
+    - job_name: 'trivy-operator'
+      static_configs:
+      - targets: ['trivy-trivy-operator.container-scanner:80']
+    
+    alerting:
+      alertmanagers:
+        - static_configs:
+          - targets: ['alertmanager-service.prometheus-namespace:9093']
+
+  alert-rules.yml: |
+    groups:
+    - name: default
+      rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          description: "Instance is down"
+
+    - name: trivy-alert-group
+      rules:
+        - alert: CriticalVulnerabilityDetected
+          expr: trivy_vulnerability_id{fixed_version!="",container_name="node-server-app-container",severity!="Unknown"} > 0
+          for: 3m
+          labels:
+            severity: warning        
+        - alert: RootPrivellegeDetected
+          expr: trivy_configaudits_info{namespace="node-server-app",config_audit_description=~".*(privileges).*",config_audit_title=~".*(privileges).*",config_audit_success="false"} > 0
+          for: 3m
+          labels:
+            deployment: node-server-app-vuln
+            namespace: node-server-app
+            severity: warning
+    - name: update-group
+      rules:
+        - alert: ContainerImageIsOutOfDate
+          expr: vector(1)
+          labels:
+            schedule: "daily"
+            container_name: "node-server-app-container"
+            image_repository: "andrejp02/node-test-container"
+            exported_namespace: "node-server-app"
+            severity: warning
+          annotations:
+            summary: "Image auto-patch check"
+            description: "Container image {{$labels.image_repository}} requires an update"
