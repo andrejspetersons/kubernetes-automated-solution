@@ -75,3 +75,17 @@ data:
   MONGO_DB: bW9uZ29kYg==
   MONGO_USERNAME: YWRtaW4=
   MONGO_PASSWORD: cGFzc3dvcmQ=
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-server-monitor
+  namespace: api-namespace
+spec:
+  selector:
+    matchLabels:
+      app: api
+  endpoints:
+    - port: web
+      interval: 15s
+      path: /metrics

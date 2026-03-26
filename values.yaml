@@ -1,22 +1,6 @@
 prometheus:
   prometheusSpec:
-    ruleSelector:
-      matchExpressions:
-        - key: role
-          operator: In
-          values:
-            - alert-rule
-    metricRelabelings:
-      - action: drop
-        regex: "metrics"
-        sourceLabels: [endpoint]
     serviceMonitorSelectorNilUsesHelmValues: false
-    serviceMonitorSelector:
-      matchExpressions:
-        - key: role
-          operator: In
-          values:
-            - service-monitor
 alertmanager:
   enabled: true
 
@@ -33,7 +17,6 @@ alertmanager:
       repeat_interval: 15m
       receiver: 'null'
       group_wait: 30s
-      group_by: ['alertname']
       group_interval: 5m
       routes:
 
@@ -44,11 +27,18 @@ alertmanager:
       - match:
           alertname: 'CriticalVulnerabilityDetected'
         receiver: 'email-receiver'
+        group_by: ['alertname']
 
       - match:
           alertname: 'ContainerImageIsOutOfDate'
         receiver: 'image-receiver'
         repeat_interval: 5m
+        group_by: ['...']
+
+      - match:
+          alertname: RootPrivellegeDetected
+        receiver: 'config-receiver'
+        group_by: ['alertname']
 
     receivers:
 
@@ -64,7 +54,7 @@ alertmanager:
           html: '{{template "text_custom_template" .}}'
           smarthost: smtp.gmail.com:587
           auth_username: 'familyand22@gmail.com'
-          auth_password: 'ymtuosqvollzjvjb'
+          auth_password: 'djlxeimqycluslyj'
           send_resolved: true
           require_tls: true
         webhook_configs:
@@ -77,12 +67,25 @@ alertmanager:
           from: 'familyand22@gmail.com'
           smarthost: smtp.gmail.com:587
           auth_username: 'familyand22@gmail.com'
-          auth_password: 'ymtuosqvollzjvjb'
+          auth_password: 'djlxeimqycluslyj'
           send_resolved: true
           require_tls: true
         webhook_configs:
           - url: 'http://image-check-service.image-check-namespace.svc.cluster.local:12000/alerts'
         
+      - name: 'config-receiver'
+
+        email_configs:
+        - to: 'familyand22@gmail.com'
+          from: 'familyand22@gmail.com'
+          smarthost: smtp.gmail.com:587
+          auth_username: 'familyand22@gmail.com'
+          auth_password: 'ekvxupccgaegadpa'
+          send_resolved: true
+          require_tls: true
+        webhook_configs:
+          - url: 'http://auto-patch-service.auto-patch-namespace.svc.cluster.local:13000/addSecurityContext'
+
     templates:
     - /etc/alertmanager/config/*.tmpl
 

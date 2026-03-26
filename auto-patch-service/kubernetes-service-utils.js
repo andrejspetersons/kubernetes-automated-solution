@@ -17,28 +17,22 @@ export async function replaceDeployment(deploymentName,namespaceName,deploymentO
 }
 
 export async function removeRootPermissions(deploymentName,namespaceName){
-  console.log(`[${new Date().toTimeString().split(' ')[0]}]`+"removeRootPermissions function start its execution");
   const patchBody = [
     {
       op: "add",
       path: "/spec/template/spec/containers/0/securityContext",
-      value: {}
-    },
-    {
-      op: "replace",
-      path: "/spec/template/spec/containers/0/securityContext/runAsNonRoot",
-      value: true
-    },
-    {
-      op: "replace",
-      path: "/spec/template/spec/containers/0/securityContext/runAsUser",
-      value: 1000
+      value: {
+        runAsUser: 1000,
+        allowPrivilegeEscalation: false,
+        runAsNonRoot: true
+      }
     },
     {
       op: "add",
-      path: "/spec/template/spec/containers/0/securityContext/allowPrivilegeEscalation",
-      value: false
-    }
+      path: "/spec/template/metadata/annotations/security.k8s.io~1configuration-hardening-timestamp",
+      value: new Date().toISOString()
+    },
+
   ];
     return await k8sClient.
     patchNamespacedDeployment({

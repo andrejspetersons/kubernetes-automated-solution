@@ -4,7 +4,7 @@ metadata:
   name: trivy-critical-alert
   namespace: monitoring-stack
   labels:
-    role: alert-rule
+    release: k8s
 spec:
   groups:
     - name: trivy-alert-group
@@ -14,6 +14,13 @@ spec:
           for: 3m
           labels:
             severity: warning
+        - alert: RootPrivellegeDetected
+          expr: trivy_configaudits_info{exported_namespace="node-server-app",config_audit_description=~".*(privileges).*",config_audit_title=~".*(privileges).*",config_audit_success="false"} > 0
+          for: 3m
+          labels:
+            deployment: node-server-app-vuln
+            namespace: node-server-app
+            severity: warning
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -21,20 +28,16 @@ metadata:
   name: update-request-alert
   namespace: monitoring-stack
   labels:
-    role: alert-rule
+      release: k8s
 spec:
   groups:
     - name: update-group
       rules:
         - alert: ContainerImageIsOutOfDate
-          expr: vector(1)
+          expr:  changes(kube_pod_container_info{container="node-server-app-container", namespace="node-server-app"}[5m]) == 0
           labels:
-            schedule: "daily"
-            container_name: "node-server-app-container"
-            image_repository: "andrejp02/node-test-container"
-            exported_namespace: "node-server-app"
-            severity: warning
           annotations:
             summary: "Image auto-patch check"
-            description: "Container image {{$labels.image_repository}} requires an update"
+            description: "Container image {{$labels.image_name}} requires an update"
+
           

@@ -14,6 +14,7 @@
 **/env*
 zabbix_values.yaml
 alert_catcher/
+cronjob-image-check.yaml
 
 # Ignore logs
 **/*.log

@@ -26,10 +26,27 @@ kind: Service
 metadata:
   name: alert-processor-service
   namespace: alert-processor-namespace
+  labels:
+    app: alert-processor
 spec:
   selector:
     app: alert-processor
   ports:
-    - protocol: TCP
+    - name: web
       port: 3000
       targetPort: 3000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: alert-service-server-monitor
+  namespace: alert-processor-namespace
+spec:
+  selector:
+    matchLabels:
+      app: alert-processor
+  endpoints:
+    - port: web
+      interval: 15s
+      path: /metrics
+

@@ -1,18 +1,16 @@
-FROM node:lts-alpine3.23
+ARG NODE_VERSION=lts-alpine3.22
+
+FROM node:${NODE_VERSION}
+LABEL base_node_version=${NODE_VERSION}
 
 WORKDIR /test_programme
 
 COPY package*.json ./
 
-RUN npm install &&\
-    npm cache clean --force &&\
-    rm -rf /root/.npm &&\
-    rm -rf node_modules
+RUN npm install
 
 COPY . .
 
 EXPOSE 4000
-
-USER root
 
 CMD ["npm", "start"]

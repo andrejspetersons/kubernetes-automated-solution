@@ -28,8 +28,13 @@ async function main(){
   }
 }
 
+app.get('/metrics', (req, res) => {
+  res.set('Content-Type','text/plain')
+  res.status(200).send('UP 1')
+})
+
 app.listen(PORT,()=>{
-  console.log(`Hello World!!${PORT}`)
+  console.log(`Test4${PORT}`)
 })
 
 main();

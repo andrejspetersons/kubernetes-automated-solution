@@ -24,9 +24,26 @@ kind: Service
 metadata:
   name: auto-patch-service
   namespace: auto-patch-namespace
+  labels:
+    app: auto-patch
 spec:
   selector:
     app: auto-patch
   ports:
-    - port: 13000
+    - name: web
+      port: 13000
       targetPort: 13000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: auto-patch-server-monitor
+  namespace: auto-patch-namespace
+spec:
+  selector:
+    matchLabels:
+      app: auto-patch
+  endpoints:
+    - port: web
+      interval: 15s
+      path: /metrics
